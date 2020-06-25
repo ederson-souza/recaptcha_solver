@@ -1,0 +1,16 @@
+resnet50_coco_best_v2.0.1.h5
+webdrivers/chromedriver
+webdrivers/chromedriver.exe
+webdrivers/debug.log
+webdrivers/geckodriver
+webdrivers/geckodriver.exe
+webdrivers/geckodriver.log
+requirements.txt
+recaptchaPC.py
+debug.log
+.vscode/launch.json
+.ipynb_checkpoints/recaptcha-checkpoint.py
+.ipynb_checkpoints/recaptcha-v1-checkpoint.py
+image.png
+imagenew.png
+pageImage.png
