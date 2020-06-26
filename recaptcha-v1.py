@@ -1,4 +1,5 @@
 # SCREEN RESOLUTION MUST BE 1920X1080
+# coding: UTF-8
 
 import os
 from time import sleep
@@ -6,12 +7,28 @@ from time import sleep
 import tensorflow as tf
 from imageai.Detection import ObjectDetection
 from numpy.random import randint
+from numpy import zeros
 from PIL import Image
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
+def webdriver_init(path):
+
+    """ Webdriver inicialization
+    :type path: string
+    :param path: path to webdriver file 
+    
+    :raises:
+    webdriver loaded
+    :rtype:
+    webdriver
+    """
+
+    driver = Chrome(path)
+    return driver
 
 def crop_image():
     
@@ -51,8 +68,8 @@ def predictions():
                                                        custom_objects = custom_objects, 
                                                        thread_safe = True, 
                                                        minimum_percentage_probability=30, 
-                                                       input_image=os.path.join(execution_path , "image.png"), 
-                                                       output_image_path=os.path.join(execution_path , "imagenew.png")
+                                                       input_image=os.path.join(execution_path , "images/image.png"), 
+                                                       output_image_path=os.path.join(execution_path , "images/imagenew.png")
                                                        )
     return detections
 
@@ -78,40 +95,50 @@ def image_preprocessing():
     #retorno ao iframe do recaptcha
     driver.switch_to.frame(name)
 
-def find_and_click():
-    
+def image_click():
+
     """ Description
     - Make Predictions
     - Find object center
     - Click on the object
     """
 
+    matrix = zeros((3,3),dtype=object)
 
     for eachObject in predictions():
         x = (eachObject["box_points"][0] + eachObject["box_points"][2])/2
         y = (eachObject["box_points"][1] + eachObject["box_points"][3])/2
+        if x <= 130:
+            if y <= 130:
+                matrix[0,0] = [x,y]
+            elif y <= 260:
+                matrix[1,0] = [x,y]
+            else:
+                matrix[2,0] = [x,y]
+        elif x <= 260:
+            if y <= 130:
+                matrix[0,1] = [x,y]
+            elif y <= 260:
+                matrix[1,1] = [x,y]
+            else:
+                matrix[2,1] = [x,y]
+        else:
+            if y <= 130:
+                matrix[0,2] = [x,y]
+            elif y <= 260:
+                matrix[1,2] = [x,y]
+            else:
+                matrix[2,2] = [x,y]
 
-        #move mouse to object center and click
-        actions = ActionChains(driver)
-        actions.move_to_element_with_offset(quadro, x + randint(5,20), y + randint(5,20)).click().perform()
-        sleep(randint(1,3))
+    for r in range(3):
+        for c in range(3):
+            if matrix[r,c] != 0:
+                actions = ActionChains(driver)
+                actions.move_to_element_with_offset(quadro, matrix[r,c][0] + randint(5,20), matrix[r,c][1]  + randint(5,20)).click().perform()
+                sleep(randint(1,2))
 
-def webdriver_init(path):
 
-    """ Webdriver inicialization
-    :type path: string
-    :param path: path to webdriver file 
-    
-    :raises:
-    webdriver loaded
-    :rtype:
-    webdriver
-    """
-
-    driver = Chrome(path)
-    return driver
-
-PATH = "C:\\Users\\eders\\Projects\\reCaptcha\\chromedriver.exe"
+PATH = "C:\\Users\\eders\\Projects\\reCaptcha\\webdrivers\\chromedriver.exe"
 WEBSITE = "https://projudi.tjpr.jus.br/projudi_consulta/processo/consultaPublicaProcessosPronunciamentosJudiciais.do?actionType=iniciar"
 
 #Inicialização da navegação
@@ -123,7 +150,7 @@ element = driver.find_element_by_xpath("/html/body/div[1]/div[1]/form/fieldset/t
 element.find_elements_by_tag_name("option")[154].click()
 sleep(0.5)
 element = driver.find_element_by_xpath('/html/body/div[1]/div[1]/form/fieldset/table[1]/tbody/tr[5]/td[2]/select')
-element.find_elements_by_tag_name("option")[9].click()
+element.find_elements_by_tag_name("option")[11].click()
 sleep(0.5)
 element = driver.find_element_by_xpath('/html/body/div[1]/div[1]/form/fieldset/table[1]/tbody/tr[7]/td[2]/select')
 element.find_elements_by_tag_name("option")[2].click()
@@ -151,7 +178,7 @@ objective = driver.find_element_by_xpath('/html/body/div/div/div[2]/div[1]/div[1
 
 #busca por images 'um hidrante' ou 'bicicletas'
 counter = 0
-while objective != 'um hidrante' and objective != 'bicicletas':  
+while objective != 'um hidrante':# and objective != 'bicicletas':  
     actions = ActionChains(driver)
     element = driver.find_element_by_xpath('/html/body/div/div/div[3]/div[2]/div[1]/div[2]/button')
     actions.move_to_element_with_offset(element, randint(10,30), randint(5,10)).perform()    
@@ -178,7 +205,7 @@ image_preprocessing()
 quadro = driver.find_element_by_xpath('/html/body/div/div')
 
 #clica nos objetos localizados
-find_and_click()
+image_click()
 
 #espera por novas fotos
 sleep(6)
@@ -187,7 +214,7 @@ sleep(6)
 image_preprocessing()
 
 #clica nos objetos localizados
-find_and_click()
+image_click()
         
 #localiza o botão enviar e clica
 actions = ActionChains(driver)

@@ -9,6 +9,7 @@ import torch
 import torchvision
 from numpy.random import randint
 from numpy import where
+from numpy import zeros
 from PIL import Image
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.action_chains import ActionChains
@@ -103,58 +104,40 @@ def predictions(predictor, image):
 
     return predictions
 
-def find_and_click():
-    """ Description
-    - Make Predictions
-    - Find object center
-    - Click on the object
-    """
-    image = cv2.imread('image.png')
-    for eachObject in predictions(predictor, image):
-        x = (eachObject[0] + eachObject[2])/2
-        y = (eachObject[1] + eachObject[3])/2
-
-        actions = ActionChains(driver)
-        actions.move_to_element_with_offset(quadro, x + randint(5,20), y + randint(5,20)).click().perform()
-        sleep(randint(1,2))
-
 def image_click(predictor, image, objeto):
-    matrix = {
-            11: None, 12: None, 13: None, 
-            21: None, 22: None, 23: None, 
-            31: None, 32: None, 33: None
-            }
+    matrix = zeros((3,3),dtype=object)
 
     for eachObject in predictions(predictor, image, objeto):
         x = (eachObject[0] + eachObject[2])/2
         y = (eachObject[1] + eachObject[3])/2
         if x <= 130:
             if y <= 130:
-                matrix[11] = [x,y]
+                matrix[0,0] = [x,y]
             elif y <= 260:
-                matrix[21] = [x,y]
+                matrix[1,0] = [x,y]
             else:
-                matrix[31] = [x,y]
+                matrix[2,0] = [x,y]
         elif x <= 260:
             if y <= 130:
-                matrix[12] = [x,y]
+                matrix[0,1] = [x,y]
             elif y <= 260:
-                matrix[22] = [x,y]
+                matrix[1,1] = [x,y]
             else:
-                matrix[32] = [x,y]
+                matrix[2,1] = [x,y]
         else:
             if y <= 130:
-                matrix[13] = [x,y]
+                matrix[0,2] = [x,y]
             elif y <= 260:
-                matrix[23] = [x,y]
+                matrix[1,2] = [x,y]
             else:
-                matrix[33] = [x,y]
+                matrix[2,2] = [x,y]
 
-    for n in matrix:
-        if matrix[n] != None:
-            actions = ActionChains(driver)
-            actions.move_to_element_with_offset(quadro, matrix[n][0] + randint(5,20), matrix[n][1]  + randint(5,20)).click().perform()
-            sleep(randint(1,2))
+    for r in range(3):
+        for c in range(3):
+            if matrix[r,c] != 0:
+                actions = ActionChains(driver)
+                actions.move_to_element_with_offset(quadro, matrix[r,c][0] + randint(5,20), matrix[r,c][1]  + randint(5,20)).click().perform()
+                sleep(randint(1,2))
 
 
 predictor = detectron_init()
